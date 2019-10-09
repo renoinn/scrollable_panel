@@ -1,8 +1,8 @@
 name: scrollable_panel
 description: drag to expand and then can scroll contents.
 version: 0.0.1
-author:
-homepage:
+author: renoinn
+homepage: https://github.com/renoinn/scrollable_panel
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
