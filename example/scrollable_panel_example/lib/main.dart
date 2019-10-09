@@ -28,6 +28,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final minPanelSize = 0.25;
+  final maxPanelSize = 1.0;
   PanelController _panelController;
   ValueNotifier<double> _valueNotifier;
 
@@ -48,9 +49,10 @@ class _MyHomePageState extends State<MyHomePage> {
           _FirstView(),
           LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
-              double availablePixels = 1.0 * constraints.biggest.height;
+              double availablePixels = maxPanelSize * constraints.biggest.height;
               _panelController = PanelController(
                 minPanelSize: minPanelSize,
+                maxPanelSize: maxPanelSize,
                 availablePixels: availablePixels,
                 extent: _valueNotifier,
               );
