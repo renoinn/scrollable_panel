@@ -1,7 +1,7 @@
 name: scrollable_panel
 description: drag to expand and then can scroll contents.
 version: 0.0.1
-author: renoinn
+author: oomori.lunch@gmail.com
 homepage: https://github.com/renoinn/scrollable_panel
 
 environment:
