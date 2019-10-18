@@ -86,14 +86,22 @@ class _SecondView extends StatelessWidget {
   Widget build(BuildContext context) {
     const double circularBoxHeight = 16.0;
     final Size size = MediaQuery.of(context).size;
-    return Container(
-      height: size.height + 200,
-      decoration: BoxDecoration(
-        color: Colors.blue,
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(circularBoxHeight), topRight: Radius.circular(circularBoxHeight)),
-        border: Border.all(color: Colors.white),
-      ),
-      child: Center(child: Text("second")),
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: size.height - kToolbarHeight - 44.0,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(circularBoxHeight), topRight: Radius.circular(circularBoxHeight)),
+              border: Border.all(color: Colors.blue),
+            ),
+            child: Center(child: Text("second")),
+          ),
+        );
+      },
     );
   }
 }
