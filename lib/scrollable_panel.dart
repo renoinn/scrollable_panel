@@ -175,9 +175,6 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
 
   @override
   void applyUserOffset(double delta) {
-    print(listShouldScroll);
-    print(delta);
-    print(controller.value);
     if (!listShouldScroll &&
         (!(controller.value == controller.maxPanelSize || controller.value == controller.minPanelSize) ||
         (controller.value < controller.maxPanelSize && delta < 0) ||
