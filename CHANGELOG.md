@@ -1,3 +1,7 @@
+## [0.1.0] - 2019/10/22
+
+* add velocity control and defaultPanelSize
+
 ## [0.0.3] - 2019/10/18
 
 * fix bug and example

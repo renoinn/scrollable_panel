@@ -27,7 +27,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final minPanelSize = 0.25;
+  final defaultPanelSize = 0.25;
   final maxPanelSize = 1.0;
   PanelController _panelController;
   ValueNotifier<double> _valueNotifier;
@@ -35,7 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _valueNotifier = ValueNotifier<double>(minPanelSize);
+    _valueNotifier = ValueNotifier<double>(defaultPanelSize);
   }
 
   @override
@@ -46,12 +46,17 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Stack(
         children: <Widget>[
-          _FirstView(),
+          InkWell(
+            onTap: () {
+              _panelController.toDefault();
+            },
+            child: _FirstView(),
+          ),
           LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
               double availablePixels = maxPanelSize * constraints.biggest.height;
               _panelController = PanelController(
-                minPanelSize: minPanelSize,
+                defaultPanelSize: defaultPanelSize,
                 maxPanelSize: maxPanelSize,
                 availablePixels: availablePixels,
                 extent: _valueNotifier,
@@ -90,7 +95,7 @@ class _SecondView extends StatelessWidget {
       builder: (BuildContext context, BoxConstraints constraints) {
         return ConstrainedBox(
           constraints: BoxConstraints(
-            minHeight: size.height - kToolbarHeight - 44.0,
+            minHeight: size.height + kToolbarHeight + 44.0,
           ),
           child: Container(
             decoration: BoxDecoration(

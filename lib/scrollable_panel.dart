@@ -21,6 +21,7 @@ class ScrollablePanel extends StatefulWidget {
 
 class _ScrollablePanelState extends State<ScrollablePanel> {
   final double _snapThreshold = 0.2;
+  double get defaultPanelSize => panelController.defaultPanelSize;
   double get minPanelSize => panelController.minPanelSize;
   double get maxPanelSize => panelController.maxPanelSize;
   ScrollController _scrollController;
@@ -59,18 +60,25 @@ class _ScrollablePanelState extends State<ScrollablePanel> {
   }
 
   void _onDragEnd() {
-    double half = (maxPanelSize - minPanelSize) / 2 + minPanelSize;
+    double fromMinValue = minPanelSize - panelController.value;
+    if (fromMinValue.abs() < 0.1) {
+      panelController.animateTo(minPanelSize);
+      return;
+    }
+
+    double half = (maxPanelSize - defaultPanelSize) / 2 + defaultPanelSize;
     double fromMaxValue = maxPanelSize - panelController.value;
     if (fromMaxValue.abs() < _snapThreshold || panelController.value > half) {
       panelController.animateTo(maxPanelSize);
       return;
     }
 
-    double fromMinValue = minPanelSize - panelController.value;
-    if (fromMinValue.abs() < _snapThreshold || panelController.value < half) {
-      panelController.animateTo(minPanelSize);
+    double fromDefaultValue = defaultPanelSize - panelController.value;
+    if (fromDefaultValue.abs() < _snapThreshold || panelController.value < half) {
+      panelController.animateTo(defaultPanelSize);
       return;
     }
+
   }
 
   bool _onScroll(ScrollNotification notification) {
@@ -84,22 +92,22 @@ class _ScrollablePanelState extends State<ScrollablePanel> {
 
 class PanelController implements TickerProvider {
   final double availablePixels;
+  final double defaultPanelSize;
   final double minPanelSize;
   final double maxPanelSize;
-  final double snapThreshold;
   final ValueNotifier<double> extent;
   Ticker _ticker;
   AnimationController _animationController;
   double get value => extent.value;
 
   PanelController({
-    @required this.minPanelSize,
+    @required this.defaultPanelSize,
+    this.minPanelSize = 0.0,
     this.maxPanelSize = 1.0,
     @required this.availablePixels,
     @required this.extent,
-    this.snapThreshold = 0.2,
   }) {
-    _animationController = AnimationController(value: minPanelSize, vsync: this, duration: Duration(milliseconds: 300));
+    _animationController = AnimationController(value: defaultPanelSize, vsync: this, duration: Duration(milliseconds: 300));
     _animationController.addListener(() {
       extent.value = _animationController.value;
     });
@@ -113,6 +121,11 @@ class PanelController implements TickerProvider {
   void animateTo(double to) {
     _animationController.value = extent.value;
     _animationController.animateTo(to);
+  }
+
+  void toDefault() {
+    _animationController.value = extent.value;
+    _animationController.animateTo(defaultPanelSize);
   }
 
   @override
@@ -188,12 +201,22 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
 
   @override
   void goBallistic(double velocity) {
+    print("velocity: ${velocity}");
     if (!listShouldScroll &&
         (!(controller.value == controller.maxPanelSize || controller.value == controller.minPanelSize) ||
         (controller.value < controller.maxPanelSize && velocity < 0) ||
         (controller.value > controller.minPanelSize && velocity > 0))
     ) {
       super.goBallistic(0);
+      if (controller.value < controller.maxPanelSize && velocity > 300) {
+        controller.animateTo(controller.maxPanelSize);
+      } else if (controller.value > controller.minPanelSize) {
+        if (velocity < -2000) {
+          controller.animateTo(controller.minPanelSize);
+        } else if (velocity < -300) {
+          controller.animateTo(controller.defaultPanelSize);
+        }
+      }
     } else {
       super.goBallistic(velocity);
     }
