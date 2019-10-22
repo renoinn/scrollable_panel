@@ -3,6 +3,8 @@
 drag to expand and then can scroll contents.
 similar "Nearby spots" panel on google map app.
 
+https://pub.dev/packages/scrollable_panel
+
 ![](https://github.com/renoinn/scrollable_panel/blob/master/panel_movie.gif)
 
 ## Usage

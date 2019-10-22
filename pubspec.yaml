@@ -1,5 +1,5 @@
 name: scrollable_panel
-description: drag to expand and then can scroll contents.
+description: drag to expand and then can scroll contents. similar "Nearby spots" panel on google map app.
 version: 0.1.0
 author: renoinn <oomori.lunch@gmail.com>
 homepage: https://github.com/renoinn/scrollable_panel
