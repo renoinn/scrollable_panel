@@ -201,7 +201,6 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
 
   @override
   void goBallistic(double velocity) {
-    print("velocity: ${velocity}");
     if (!listShouldScroll &&
         (!(controller.value == controller.maxPanelSize || controller.value == controller.minPanelSize) ||
         (controller.value < controller.maxPanelSize && velocity < 0) ||

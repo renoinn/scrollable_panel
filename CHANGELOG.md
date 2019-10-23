@@ -1,3 +1,7 @@
+## [0.1.1] - 2019/10/23
+
+* delete debug log
+
 ## [0.1.0] - 2019/10/22
 
 * add velocity control and defaultPanelSize
