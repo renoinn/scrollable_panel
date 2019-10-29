@@ -1,3 +1,7 @@
+## [0.1.2] - 2019/10/29
+
+* fix negative velocity
+
 ## [0.1.1] - 2019/10/23
 
 * delete debug log

@@ -61,7 +61,7 @@ class _ScrollablePanelState extends State<ScrollablePanel> {
 
   void _onDragEnd() {
     double fromMinValue = minPanelSize - panelController.value;
-    if (fromMinValue.abs() < 0.1) {
+    if (fromMinValue.abs() < (defaultPanelSize - minPanelSize) / 2) {
       panelController.animateTo(minPanelSize);
       return;
     }
@@ -107,6 +107,8 @@ class PanelController implements TickerProvider {
     @required this.availablePixels,
     @required this.extent,
   }) {
+    assert(minPanelSize < defaultPanelSize);
+    assert(defaultPanelSize < maxPanelSize);
     _animationController = AnimationController(value: defaultPanelSize, vsync: this, duration: Duration(milliseconds: 300));
     _animationController.addListener(() {
       extent.value = _animationController.value;
@@ -206,15 +208,18 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
         (controller.value < controller.maxPanelSize && velocity < 0) ||
         (controller.value > controller.minPanelSize && velocity > 0))
     ) {
+      print(controller.value);
       super.goBallistic(0);
       if (controller.value < controller.maxPanelSize && velocity > 300) {
         controller.animateTo(controller.maxPanelSize);
-      } else if (controller.value > controller.minPanelSize) {
+      } else if (controller.value > controller.defaultPanelSize) {
         if (velocity < -2000) {
           controller.animateTo(controller.minPanelSize);
         } else if (velocity < -300) {
           controller.animateTo(controller.defaultPanelSize);
         }
+      } else if (controller.value < controller.defaultPanelSize && velocity < -300) {
+        controller.animateTo(controller.minPanelSize);
       }
     } else {
       super.goBallistic(velocity);
