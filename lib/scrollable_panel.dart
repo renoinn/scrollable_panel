@@ -208,7 +208,6 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
         (controller.value < controller.maxPanelSize && velocity < 0) ||
         (controller.value > controller.minPanelSize && velocity > 0))
     ) {
-      print(controller.value);
       super.goBallistic(0);
       if (controller.value < controller.maxPanelSize && velocity > 300) {
         controller.animateTo(controller.maxPanelSize);
