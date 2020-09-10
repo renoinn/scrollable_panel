@@ -1,11 +1,11 @@
 name: scrollable_panel
 description: drag to expand and then can scroll contents. similar "Nearby spots" panel on google map app.
-version: 0.1.2
+version: 0.2.0
 author: renoinn <oomori.lunch@gmail.com>
 homepage: https://github.com/renoinn/scrollable_panel
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=2.7.0 <3.0.0"
 
 dependencies:
   flutter:

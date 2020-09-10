@@ -27,22 +27,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final defaultPanelSize = 0.25;
-  final maxPanelSize = 1.0;
-  PanelController _panelController;
-  ValueNotifier<double> _valueNotifier;
-
-  @override
-  void initState() {
-    super.initState();
-    _valueNotifier = ValueNotifier<double>(defaultPanelSize);
-  }
+  PanelController _panelController = PanelController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text('scrollable panel'),
       ),
       body: Stack(
         children: <Widget>[
@@ -52,29 +43,22 @@ class _MyHomePageState extends State<MyHomePage> {
             },
             child: _FirstView(),
           ),
-          LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              double availablePixels = maxPanelSize * constraints.biggest.height;
-              _panelController = PanelController(
-                defaultPanelSize: defaultPanelSize,
-                maxPanelSize: maxPanelSize,
-                availablePixels: availablePixels,
-                extent: _valueNotifier,
-              );
-              return ScrollablePanel(
-                controller: _panelController,
+          ScrollablePanel(
+            controller: _panelController,
+            builder: (context, controller) {
+              return SingleChildScrollView(
+                controller: controller,
                 child: _SecondView(),
               );
-            }
-          )
+            },
+          ),
         ],
-      )
+      ),
     );
   }
 }
 
 class _FirstView extends StatelessWidget {
-
   const _FirstView({Key key}) : super(key: key);
 
   @override
@@ -86,7 +70,6 @@ class _FirstView extends StatelessWidget {
 }
 
 class _SecondView extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     const double circularBoxHeight = 16.0;

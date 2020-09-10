@@ -2,39 +2,48 @@ library scrollable_panel;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/scheduler/ticker.dart';
 
 class ScrollablePanel extends StatefulWidget {
-  final Widget child;
+  final double defaultPanelSize;
+  final double minPanelSize;
+  final double maxPanelSize;
+  final ScrollableWidgetBuilder builder;
   final PanelController controller;
 
   const ScrollablePanel({
     Key key,
-    this.child,
-    @required this.controller,
-  }) : super(key: key);
+    @required this.builder,
+    this.controller,
+    this.defaultPanelSize = 0.25,
+    this.minPanelSize = 0,
+    this.maxPanelSize = 1.0,
+  })  : assert(minPanelSize < defaultPanelSize),
+        assert(defaultPanelSize < maxPanelSize),
+        super(key: key);
 
   @override
   State<StatefulWidget> createState() => _ScrollablePanelState();
-
 }
 
-class _ScrollablePanelState extends State<ScrollablePanel> {
+class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProviderStateMixin {
   final double _snapThreshold = 0.2;
-  double get defaultPanelSize => panelController.defaultPanelSize;
-  double get minPanelSize => panelController.minPanelSize;
-  double get maxPanelSize => panelController.maxPanelSize;
+  double get defaultPanelSize => widget.defaultPanelSize;
+  double get minPanelSize => widget.minPanelSize;
+  double get maxPanelSize => widget.maxPanelSize;
   ScrollController _scrollController;
-  PanelController get panelController => widget.controller;
+  AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
-    panelController.extent.addListener(() {
+    _animationController = AnimationController(value: defaultPanelSize, vsync: this, duration: Duration(milliseconds: 300));
+    _animationController.addListener(() {
       if (mounted) {
         setState(() {});
       }
     });
+    var panelController = widget.controller ?? PanelController();
+    panelController._addState(this);
     _scrollController = _PanelScrollController(controller: panelController);
   }
 
@@ -43,42 +52,35 @@ class _ScrollablePanelState extends State<ScrollablePanel> {
     return Align(
       alignment: Alignment.bottomCenter,
       child: FractionallySizedBox(
-        heightFactor: panelController.value,
+        heightFactor: _animationController.value,
         alignment: Alignment.bottomCenter,
         child: NotificationListener<ScrollNotification>(
           onNotification: _onScroll,
-          child: Scrollbar(
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              controller: _scrollController,
-              child: widget.child,
-            ),
-          ),
-        )
-      )
+          child: widget.builder(context, _scrollController),
+        ),
+      ),
     );
   }
 
   void _onDragEnd() {
-    double fromMinValue = minPanelSize - panelController.value;
+    double fromMinValue = minPanelSize - _animationController.value;
     if (fromMinValue.abs() < (defaultPanelSize - minPanelSize) / 2) {
-      panelController.animateTo(minPanelSize);
+      _animateTo(minPanelSize);
       return;
     }
 
     double half = (maxPanelSize - defaultPanelSize) / 2 + defaultPanelSize;
-    double fromMaxValue = maxPanelSize - panelController.value;
-    if (fromMaxValue.abs() < _snapThreshold || panelController.value > half) {
-      panelController.animateTo(maxPanelSize);
+    double fromMaxValue = maxPanelSize - _animationController.value;
+    if (fromMaxValue.abs() < _snapThreshold || _animationController.value > half) {
+      _animateTo(maxPanelSize);
       return;
     }
 
-    double fromDefaultValue = defaultPanelSize - panelController.value;
-    if (fromDefaultValue.abs() < _snapThreshold || panelController.value < half) {
-      panelController.animateTo(defaultPanelSize);
+    double fromDefaultValue = defaultPanelSize - _animationController.value;
+    if (fromDefaultValue.abs() < _snapThreshold || _animationController.value < half) {
+      _animateTo(defaultPanelSize);
       return;
     }
-
   }
 
   bool _onScroll(ScrollNotification notification) {
@@ -88,56 +90,42 @@ class _ScrollablePanelState extends State<ScrollablePanel> {
 
     return true;
   }
-}
 
-class PanelController implements TickerProvider {
-  final double availablePixels;
-  final double defaultPanelSize;
-  final double minPanelSize;
-  final double maxPanelSize;
-  final ValueNotifier<double> extent;
-  Ticker _ticker;
-  AnimationController _animationController;
-  double get value => extent.value;
-
-  PanelController({
-    @required this.defaultPanelSize,
-    this.minPanelSize = 0.0,
-    this.maxPanelSize = 1.0,
-    @required this.availablePixels,
-    @required this.extent,
-  }) {
-    assert(minPanelSize < defaultPanelSize);
-    assert(defaultPanelSize < maxPanelSize);
-    _animationController = AnimationController(value: defaultPanelSize, vsync: this, duration: Duration(milliseconds: 300));
-    _animationController.addListener(() {
-      extent.value = _animationController.value;
-    });
-  }
-
-  void updateExtent(double delta) {
-    double value = delta / availablePixels;
-    extent.value += value;
-  }
-
-  void animateTo(double to) {
-    _animationController.value = extent.value;
+  void _animateTo(double to) {
     _animationController.animateTo(to);
   }
 
-  void toDefault() {
-    _animationController.value = extent.value;
+  void _toDefault() {
     _animationController.animateTo(defaultPanelSize);
   }
+}
 
-  @override
-  Ticker createTicker(onTick) {
-    _ticker = Ticker(onTick, debugLabel: kDebugMode ? 'created by $this' : null);
-    // We assume that this is called from initState, build, or some sort of
-    // event handler, and that thus TickerMode.of(context) would return true. We
-    // can't actually check that here because if we're in initState then we're
-    // not allowed to do inheritance checks yet.
-    return _ticker;
+class PanelController {
+  _ScrollablePanelState _state;
+
+  double get value => _state?._animationController?.value;
+  bool get isAttached => _state != null;
+  double get defaultPanelSize => _state?.defaultPanelSize ?? 0.25;
+  double get minPanelSize => _state?.minPanelSize ?? 0;
+  double get maxPanelSize => _state?.maxPanelSize ?? 1.0;
+
+  PanelController();
+
+  void _addState(_ScrollablePanelState state) {
+    _state = state;
+  }
+
+  void updateExtent(double delta) {
+    double value = delta / _state.context.size.height;
+    _state._animationController.value += value;
+  }
+
+  void animateTo(double to) {
+    _state._animateTo(to);
+  }
+
+  void toDefault() {
+    _state._toDefault();
   }
 }
 
@@ -148,21 +136,16 @@ class _PanelScrollController extends ScrollController {
     double initialScrollOffset = 0.0,
     keepScrollOffset = true,
     debugLabel,
-    this.controller
+    this.controller,
   }) : super(
-    keepScrollOffset: keepScrollOffset,
-    debugLabel: debugLabel,
-    initialScrollOffset: initialScrollOffset,
-  );
+          keepScrollOffset: keepScrollOffset,
+          debugLabel: debugLabel,
+          initialScrollOffset: initialScrollOffset,
+        );
 
   @override
   _PanelScrollPosition createScrollPosition(ScrollPhysics physics, ScrollContext context, ScrollPosition oldPosition) {
-    return _PanelScrollPosition(
-      physics: physics,
-      context: context,
-      oldPosition: oldPosition,
-      controller: controller
-    );
+    return _PanelScrollPosition(physics: physics, context: context, oldPosition: oldPosition, controller: controller);
   }
 }
 
@@ -176,15 +159,15 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
     bool keepScrollOffset = true,
     ScrollPosition oldPosition,
     String debugLabel,
-    this.controller
+    this.controller,
   }) : super(
-    physics: physics,
-    context: context,
-    initialPixels: initialPixels,
-    keepScrollOffset: keepScrollOffset,
-    oldPosition: oldPosition,
-    debugLabel: debugLabel,
-  );
+          physics: physics,
+          context: context,
+          initialPixels: initialPixels,
+          keepScrollOffset: keepScrollOffset,
+          oldPosition: oldPosition,
+          debugLabel: debugLabel,
+        );
 
   bool get listShouldScroll => pixels > 0.0;
 
@@ -192,9 +175,8 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
   void applyUserOffset(double delta) {
     if (!listShouldScroll &&
         (!(controller.value == controller.maxPanelSize || controller.value == controller.minPanelSize) ||
-        (controller.value < controller.maxPanelSize && delta < 0) ||
-        (controller.value > controller.minPanelSize && delta > 0))
-    ) {
+            (controller.value < controller.maxPanelSize && delta < 0) ||
+            (controller.value > controller.minPanelSize && delta > 0))) {
       controller.updateExtent(-delta);
     } else {
       super.applyUserOffset(delta);
@@ -205,9 +187,8 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
   void goBallistic(double velocity) {
     if (!listShouldScroll &&
         (!(controller.value == controller.maxPanelSize || controller.value == controller.minPanelSize) ||
-        (controller.value < controller.maxPanelSize && velocity < 0) ||
-        (controller.value > controller.minPanelSize && velocity > 0))
-    ) {
+            (controller.value < controller.maxPanelSize && velocity < 0) ||
+            (controller.value > controller.minPanelSize && velocity > 0))) {
       super.goBallistic(0);
       if (controller.value < controller.maxPanelSize && velocity > 300) {
         controller.animateTo(controller.maxPanelSize);
