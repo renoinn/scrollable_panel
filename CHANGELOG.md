@@ -1,3 +1,7 @@
+## [0.2.0] - 2020/09/10
+
+* update panel usage
+
 ## [0.1.2] - 2019/10/29
 
 * fix negative velocity
