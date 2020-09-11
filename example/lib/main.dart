@@ -32,8 +32,11 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('scrollable panel'),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight),
+        child: _AnimatedAppBar(
+          panelController: _panelController,
+        ),
       ),
       body: Stack(
         children: <Widget>[
@@ -54,6 +57,45 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AnimatedAppBar extends StatefulWidget {
+  const _AnimatedAppBar({
+    Key key,
+    this.panelController,
+  }) : super(key: key);
+
+  final PanelController panelController;
+
+  @override
+  __AnimatedAppBarState createState() => __AnimatedAppBarState();
+}
+
+class __AnimatedAppBarState extends State<_AnimatedAppBar> {
+  Animation _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animation = ColorTween(
+      begin: Colors.transparent,
+      end: Colors.red,
+    ).animate(widget.panelController.animation);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: widget.panelController.animation,
+      builder: (context, child) {
+        return Container(
+          height: kToolbarHeight,
+          color: _animation.value,
+          child: SafeArea(child: Text('scrollable panel')),
+        );
+      },
     );
   }
 }
