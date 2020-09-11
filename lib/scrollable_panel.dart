@@ -103,6 +103,7 @@ class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProv
 class PanelController {
   _ScrollablePanelState _state;
 
+  Animation get animation => _state?._animationController;
   double get value => _state?._animationController?.value;
   bool get isAttached => _state != null;
   double get defaultPanelSize => _state?.defaultPanelSize ?? 0.25;
