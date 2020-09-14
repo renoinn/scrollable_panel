@@ -91,10 +91,10 @@ packages:
   scrollable_panel:
     dependency: "direct main"
     description:
-      path: "../.."
+      path: ".."
       relative: true
     source: path
-    version: "0.1.2"
+    version: "0.2.1"
   sky_engine:
     dependency: transitive
     description: flutter

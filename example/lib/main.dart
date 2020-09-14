@@ -48,6 +48,8 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           ScrollablePanel(
             controller: _panelController,
+            onClose: () => print('onClose'),
+            onExpand: () => print('onExpand'),
             builder: (context, controller) {
               return SingleChildScrollView(
                 controller: controller,
@@ -73,27 +75,42 @@ class _AnimatedAppBar extends StatefulWidget {
   __AnimatedAppBarState createState() => __AnimatedAppBarState();
 }
 
-class __AnimatedAppBarState extends State<_AnimatedAppBar> {
+class __AnimatedAppBarState extends State<_AnimatedAppBar> with SingleTickerProviderStateMixin {
   Animation _animation;
+  AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 300));
+    widget.panelController.animation.addListener(() {
+      if (widget.panelController.animation.value >= 0.8) {
+        _animationController.value = (0.2 - (1.0 - widget.panelController.animation.value)) * 5;
+      } else {
+        _animationController.value = 0;
+      }
+    });
     _animation = ColorTween(
       begin: Colors.transparent,
       end: Colors.red,
-    ).animate(widget.panelController.animation);
+    ).animate(_animationController);
   }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: widget.panelController.animation,
+      animation: _animationController,
       builder: (context, child) {
-        return Container(
-          height: kToolbarHeight,
+        return Material(
           color: _animation.value,
-          child: SafeArea(child: Text('scrollable panel')),
+          child: SafeArea(
+            bottom: false,
+            top: true,
+            child: Container(
+              height: kToolbarHeight,
+              child: Text('scrollable panel'),
+            ),
+          ),
         );
       },
     );

@@ -1,4 +1,4 @@
-name: scrollable_panel_example
+name: example
 description: A new Flutter application.
 
 # The following defines the version and build number for your application.
@@ -24,7 +24,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
   scrollable_panel:
-    path: ../../
+    path: ../
 
 dev_dependencies:
   flutter_test:

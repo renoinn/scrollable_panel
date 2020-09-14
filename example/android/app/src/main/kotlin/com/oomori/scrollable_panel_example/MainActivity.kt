@@ -1,4 +1,4 @@
-package com.oomori.scrollable_panel_example
+package com.oomori.example
 
 import android.os.Bundle
 
