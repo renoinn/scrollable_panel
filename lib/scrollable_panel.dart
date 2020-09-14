@@ -9,6 +9,8 @@ class ScrollablePanel extends StatefulWidget {
   final double maxPanelSize;
   final ScrollableWidgetBuilder builder;
   final PanelController controller;
+  final VoidCallback onClose;
+  final VoidCallback onExpand;
 
   const ScrollablePanel({
     Key key,
@@ -17,12 +19,20 @@ class ScrollablePanel extends StatefulWidget {
     this.defaultPanelSize = 0.25,
     this.minPanelSize = 0,
     this.maxPanelSize = 1.0,
+    this.onClose,
+    this.onExpand,
   })  : assert(minPanelSize < defaultPanelSize),
         assert(defaultPanelSize < maxPanelSize),
         super(key: key);
 
   @override
   State<StatefulWidget> createState() => _ScrollablePanelState();
+}
+
+enum OpenState {
+  open,
+  expand,
+  close,
 }
 
 class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProviderStateMixin {
@@ -32,6 +42,7 @@ class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProv
   double get maxPanelSize => widget.maxPanelSize;
   ScrollController _scrollController;
   AnimationController _animationController;
+  OpenState _openState = OpenState.open;
 
   @override
   void initState() {
@@ -40,6 +51,22 @@ class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProv
     _animationController.addListener(() {
       if (mounted) {
         setState(() {});
+
+        if (_animationController.value == defaultPanelSize) {
+          _openState = OpenState.open;
+        }
+        if (_animationController.value == minPanelSize) {
+          if (widget.onClose != null && _openState != OpenState.close) {
+            widget.onClose();
+          }
+          _openState = OpenState.close;
+        }
+        if (_animationController.value == maxPanelSize) {
+          if (widget.onExpand != null && _openState != OpenState.expand) {
+            widget.onExpand();
+          }
+          _openState = OpenState.expand;
+        }
       }
     });
     var panelController = widget.controller ?? PanelController();
@@ -51,12 +78,15 @@ class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProv
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.bottomCenter,
-      child: FractionallySizedBox(
-        heightFactor: _animationController.value,
-        alignment: Alignment.bottomCenter,
-        child: NotificationListener<ScrollNotification>(
-          onNotification: _onScroll,
-          child: widget.builder(context, _scrollController),
+      child: WillPopScope(
+        onWillPop: _onWillPop,
+        child: FractionallySizedBox(
+          heightFactor: _animationController.value,
+          alignment: Alignment.bottomCenter,
+          child: NotificationListener<ScrollNotification>(
+            onNotification: _onScroll,
+            child: widget.builder(context, _scrollController),
+          ),
         ),
       ),
     );
@@ -98,6 +128,25 @@ class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProv
   void _toDefault() {
     _animationController.animateTo(defaultPanelSize);
   }
+
+  void _expand() {
+    _animateTo(maxPanelSize);
+  }
+
+  void _close() {
+    _animateTo(minPanelSize);
+  }
+
+  Future<bool> _onWillPop() async {
+    if (_animationController.value > defaultPanelSize) {
+      _toDefault();
+      return false;
+    } else if (_animationController.value > minPanelSize) {
+      _close();
+      return false;
+    }
+    return true;
+  }
 }
 
 class PanelController {
@@ -127,6 +176,14 @@ class PanelController {
 
   void toDefault() {
     _state._toDefault();
+  }
+
+  void expand() {
+    _state._expand();
+  }
+
+  void close() {
+    _state._close();
   }
 }
 
