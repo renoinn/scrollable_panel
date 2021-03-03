@@ -33,21 +33,20 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
+        preferredSize: const Size.fromHeight(kToolbarHeight),
         child: _AnimatedAppBar(
           panelController: _panelController,
         ),
       ),
       body: Stack(
-        children: <Widget>[
-          InkWell(
-            onTap: () {
-              _panelController.toDefault();
-            },
-            child: _FirstView(),
+        children: [
+          Positioned.fill(
+            child: _FirstView(controller: _panelController),
           ),
           ScrollablePanel(
+            defaultPanelState: PanelState.close,
             controller: _panelController,
+            onOpen: () => print('onOpen'),
             onClose: () => print('onClose'),
             onExpand: () => print('onExpand'),
             builder: (context, controller) {
@@ -91,7 +90,7 @@ class __AnimatedAppBarState extends State<_AnimatedAppBar> with SingleTickerProv
       }
     });
     _animation = ColorTween(
-      begin: Colors.transparent,
+      begin: Colors.white,
       end: Colors.red,
     ).animate(_animationController);
   }
@@ -102,13 +101,16 @@ class __AnimatedAppBarState extends State<_AnimatedAppBar> with SingleTickerProv
       animation: _animationController,
       builder: (context, child) {
         return Material(
+          elevation: 4.0,
           color: _animation.value,
           child: SafeArea(
             bottom: false,
             top: true,
             child: Container(
               height: kToolbarHeight,
-              child: Text('scrollable panel'),
+              child: Center(
+                child: Text('scrollable panel'),
+              ),
             ),
           ),
         );
@@ -118,12 +120,31 @@ class __AnimatedAppBarState extends State<_AnimatedAppBar> with SingleTickerProv
 }
 
 class _FirstView extends StatelessWidget {
-  const _FirstView({Key key}) : super(key: key);
+  const _FirstView({
+    Key key,
+    this.controller,
+  }) : super(key: key);
+
+  final PanelController controller;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text("first"),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        ElevatedButton(
+          onPressed: () => controller.open(),
+          child: Text('open panel'),
+        ),
+        ElevatedButton(
+          onPressed: () => controller.close(),
+          child: Text('close panel'),
+        ),
+        ElevatedButton(
+          onPressed: () => controller.expand(),
+          child: Text('expand panel'),
+        ),
+      ],
     );
   }
 }

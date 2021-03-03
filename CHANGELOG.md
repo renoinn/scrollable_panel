@@ -1,3 +1,9 @@
+## [0.3.0] - 2021/03/03
+
+* add parameter onOpen, defaultPanelState
+* add open() method
+* add dartdoc
+
 ## [0.2.2] - 2020/09/11
 
 * add onClose, onExpand
