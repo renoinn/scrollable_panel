@@ -12,24 +12,24 @@ https://pub.dev/packages/scrollable_panel
 
 | Properties | Data Type | Description |
 |--|--|--|
-| builder | ScrollableWidgetBuilder |  |
-| controller | PanelController |  |
-| defaultPanelState | PanelState | (default value PanelState.open) |
-| defaultPanelSize | double | (default value 0.25) |
-| minPanelSize | double | (default value 0) |
-| maxPanelSize | double | (default value 1.0) |
-| onOpen | VoidCallback | |
-| onClose | VoidCallback | |
-| onExpand | VoidCallback | |
+| builder | ScrollableWidgetBuilder | builder for inner panel view. ScrollableWidgetBuilder type define in draggable_scrollable_sheet.dart. provide PanelScrollController that extends ScrollController. |
+| controller | PanelController | control panel from some interaction like button. |
+| defaultPanelState | PanelState | set default panel state. (default value PanelState.open) |
+| defaultPanelSize | double | set default panel height factor (default value 0.25) |
+| minPanelSize | double | set minimum panel height factor. (default value 0) |
+| maxPanelSize | double | set maximum panel height factor. (default value 1.0) |
+| onOpen | VoidCallback | if non-null, this callback is called when panel state become open |
+| onClose | VoidCallback | if non-null, this callback is called when panel state become close |
+| onExpand | VoidCallback | if non-null, this callback is called when panel state become expand |
 
 ## PanelController actions
 
 | Action | Data Type | Description |
 |--|--|--|
-| open | void |  |
-| expand | void |  |
-| close | void |  |
-| animateTo | double | (default value 0.25) |
+| open | void | open panel. panel animate to defaultPanelSize. |
+| expand | void | expand panel. panel animate to maxPanelSize. |
+| close | void | close panel. panel animate to minPanelSize. |
+| animateTo | double | animate panel to value height. |
 
 ## Usage
 
