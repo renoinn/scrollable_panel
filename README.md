@@ -78,7 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 ## TODO
 
-- Android embed v2 migration
-- write README.md and dartdoc
-- null-safety support
+- ~write README.md and dartdoc~
+- ~null-safety support~
+- write test code
 - add `List<double> anchor` property to use multi snapping point.

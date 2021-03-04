@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-// TODO defaultPanelSizeじゃなくてList<double> anchorみたいなのを用意して、そのポイントでsnapするようにしたい。その場合、toDefaultはtoNext/toPrev
+// TODO List<double> anchorみたいなのを用意して、そのポイントでsnapするようにしたい。open()した時に、defaultPanelSizeが指定されていればdefaultPanelSizeに、されていなければanchor[0]になる。toNext/toPrevで上下する。
 
 class ScrollablePanel extends StatefulWidget {
   const ScrollablePanel({
-    Key key,
-    @required this.builder,
+    Key? key,
+    required this.builder,
     this.controller,
     this.defaultPanelState = PanelState.open,
     this.defaultPanelSize = 0.25,
@@ -48,16 +48,16 @@ class ScrollablePanel extends StatefulWidget {
   final ScrollableWidgetBuilder builder;
 
   /// [PanelController] instance for control panel.
-  final PanelController controller;
+  final PanelController? controller;
 
   /// call this method when PanelState become open if not null.
-  final VoidCallback onOpen;
+  final VoidCallback? onOpen;
 
   /// call this method when PanelState become close if not null.
-  final VoidCallback onClose;
+  final VoidCallback? onClose;
 
   /// call this method when PanelState become expand if not null.
-  final VoidCallback onExpand;
+  final VoidCallback? onExpand;
 
   @override
   State<StatefulWidget> createState() => _ScrollablePanelState();
@@ -79,9 +79,9 @@ class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProv
   double get defaultPanelSize => widget.defaultPanelSize;
   double get minPanelSize => widget.minPanelSize;
   double get maxPanelSize => widget.maxPanelSize;
-  ScrollController _scrollController;
-  AnimationController _dragAnimationController;
-  PanelState _panelState;
+  late ScrollController _scrollController;
+  late AnimationController _dragAnimationController;
+  late PanelState _panelState;
 
   @override
   void initState() {
@@ -100,25 +100,25 @@ class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProv
 
         if (_dragAnimationController.value == defaultPanelSize) {
           if (widget.onOpen != null && _panelState != PanelState.open) {
-            widget.onOpen();
+            widget.onOpen!();
           }
           _panelState = PanelState.open;
         }
         if (_dragAnimationController.value == minPanelSize) {
           if (widget.onClose != null && _panelState != PanelState.close) {
-            widget.onClose();
+            widget.onClose!();
           }
           _panelState = PanelState.close;
         }
         if (_dragAnimationController.value == maxPanelSize) {
           if (widget.onExpand != null && _panelState != PanelState.expand) {
-            widget.onExpand();
+            widget.onExpand!();
           }
           _panelState = PanelState.expand;
         }
       }
     });
-    var panelController = widget.controller ?? PanelController();
+    final panelController = widget.controller ?? PanelController();
     panelController._addState(this);
     _scrollController = _PanelScrollController(controller: panelController);
   }
@@ -200,10 +200,10 @@ class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProv
 }
 
 class PanelController {
-  _ScrollablePanelState _state;
+  _ScrollablePanelState? _state;
 
-  Animation get animation => _state?._dragAnimationController;
-  double get value => _state?._dragAnimationController?.value;
+  Animation? get animation => _state?._dragAnimationController;
+  double? get value => _state?._dragAnimationController.value;
   bool get isAttached => _state != null;
   double get defaultPanelSize => _state?.defaultPanelSize ?? 0.25;
   double get minPanelSize => _state?.minPanelSize ?? 0;
@@ -216,18 +216,21 @@ class PanelController {
   }
 
   void _updateExtent(double delta) {
-    final value = delta / _state.context.size.height;
-    _state._dragAnimationController.value += value;
+    if (!isAttached) return;
+    final value = delta / (_state?.context.size?.height ?? 0);
+    _state?._dragAnimationController.value += value;
   }
 
   /// animate panel height to passed value
   void animateTo(double to) {
-    _state._animateTo(to);
+    if (!isAttached) throw UnAttachStateException('you can\'t use controller before _ScrollablePanelState build.');
+    _state?._animateTo(to);
   }
 
   /// animate panel height to defaultPanelSize
   void toDefault() {
-    _state._toDefault();
+    if (!isAttached) throw UnAttachStateException('you can\'t use controller before _ScrollablePanelState build.');
+    _state?._toDefault();
   }
 
   /// alias toDefault
@@ -235,13 +238,21 @@ class PanelController {
 
   /// animate panel height to maxPanelSize
   void expand() {
-    _state._expand();
+    if (!isAttached) throw UnAttachStateException('you can\'t use controller before _ScrollablePanelState build.');
+    _state?._expand();
   }
 
   /// animate panel height to minPanelSize
   void close() {
-    _state._close();
+    if (!isAttached) throw UnAttachStateException('you can\'t use controller before _ScrollablePanelState build.');
+    _state?._close();
   }
+}
+
+class UnAttachStateException implements Exception {
+  final String message;
+
+  UnAttachStateException(this.message);
 }
 
 class _PanelScrollController extends ScrollController {
@@ -249,9 +260,9 @@ class _PanelScrollController extends ScrollController {
 
   _PanelScrollController({
     double initialScrollOffset = 0.0,
-    keepScrollOffset = true,
-    debugLabel,
-    this.controller,
+    bool keepScrollOffset = true,
+    String? debugLabel,
+    required this.controller,
   }) : super(
           keepScrollOffset: keepScrollOffset,
           debugLabel: debugLabel,
@@ -259,7 +270,7 @@ class _PanelScrollController extends ScrollController {
         );
 
   @override
-  _PanelScrollPosition createScrollPosition(ScrollPhysics physics, ScrollContext context, ScrollPosition oldPosition) {
+  _PanelScrollPosition createScrollPosition(ScrollPhysics physics, ScrollContext context, ScrollPosition? oldPosition) {
     return _PanelScrollPosition(physics: physics, context: context, oldPosition: oldPosition, controller: controller);
   }
 }
@@ -268,13 +279,13 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
   final PanelController controller;
 
   _PanelScrollPosition({
-    ScrollPhysics physics,
-    ScrollContext context,
+    required ScrollPhysics physics,
+    required ScrollContext context,
     double initialPixels = 0.0,
     bool keepScrollOffset = true,
-    ScrollPosition oldPosition,
-    String debugLabel,
-    this.controller,
+    ScrollPosition? oldPosition,
+    String? debugLabel,
+    required this.controller,
   }) : super(
           physics: physics,
           context: context,
@@ -285,13 +296,14 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
         );
 
   bool get listShouldScroll => pixels > 0.0;
+  double get controllerValue => controller.animation?.value ?? 0;
 
   @override
   void applyUserOffset(double delta) {
     if (!listShouldScroll &&
         (!(controller.value == controller.maxPanelSize || controller.value == controller.minPanelSize) ||
-            (controller.value < controller.maxPanelSize && delta < 0) ||
-            (controller.value > controller.minPanelSize && delta > 0))) {
+            (controllerValue < controller.maxPanelSize && delta < 0) ||
+            (controllerValue > controller.minPanelSize && delta > 0))) {
       controller._updateExtent(-delta);
     } else {
       super.applyUserOffset(delta);
@@ -302,18 +314,18 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
   void goBallistic(double velocity) {
     if (!listShouldScroll &&
         (!(controller.value == controller.maxPanelSize || controller.value == controller.minPanelSize) ||
-            (controller.value < controller.maxPanelSize && velocity < 0) ||
-            (controller.value > controller.minPanelSize && velocity > 0))) {
+            (controllerValue < controller.maxPanelSize && velocity < 0) ||
+            (controllerValue > controller.minPanelSize && velocity > 0))) {
       super.goBallistic(0);
-      if (controller.value < controller.maxPanelSize && velocity > 300) {
+      if (controllerValue < controller.maxPanelSize && velocity > 300) {
         controller.animateTo(controller.maxPanelSize);
-      } else if (controller.value > controller.defaultPanelSize) {
+      } else if (controllerValue > controller.defaultPanelSize) {
         if (velocity < -2000) {
           controller.animateTo(controller.minPanelSize);
         } else if (velocity < -300) {
           controller.animateTo(controller.defaultPanelSize);
         }
-      } else if (controller.value < controller.defaultPanelSize && velocity < -300) {
+      } else if (controllerValue < controller.defaultPanelSize && velocity < -300) {
         controller.animateTo(controller.minPanelSize);
       }
     } else {

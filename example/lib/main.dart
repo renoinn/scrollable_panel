@@ -18,7 +18,10 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  MyHomePage({
+    Key? key,
+    required this.title,
+  }) : super(key: key);
 
   final String title;
 
@@ -64,8 +67,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
 class _AnimatedAppBar extends StatefulWidget {
   const _AnimatedAppBar({
-    Key key,
-    this.panelController,
+    Key? key,
+    required this.panelController,
   }) : super(key: key);
 
   final PanelController panelController;
@@ -75,16 +78,16 @@ class _AnimatedAppBar extends StatefulWidget {
 }
 
 class __AnimatedAppBarState extends State<_AnimatedAppBar> with SingleTickerProviderStateMixin {
-  Animation _animation;
-  AnimationController _animationController;
+  late final Animation _animation;
+  late final AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 300));
-    widget.panelController.animation.addListener(() {
-      if (widget.panelController.animation.value >= 0.8) {
-        _animationController.value = (0.2 - (1.0 - widget.panelController.animation.value)) * 5;
+    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    widget.panelController.animation?.addListener(() {
+      if (widget.panelController.animation!.value >= 0.8) {
+        _animationController.value = (0.2 - (1.0 - widget.panelController.animation!.value)) * 5;
       } else {
         _animationController.value = 0;
       }
@@ -108,7 +111,7 @@ class __AnimatedAppBarState extends State<_AnimatedAppBar> with SingleTickerProv
             top: true,
             child: Container(
               height: kToolbarHeight,
-              child: Center(
+              child: const Center(
                 child: Text('scrollable panel'),
               ),
             ),
@@ -121,8 +124,8 @@ class __AnimatedAppBarState extends State<_AnimatedAppBar> with SingleTickerProv
 
 class _FirstView extends StatelessWidget {
   const _FirstView({
-    Key key,
-    this.controller,
+    Key? key,
+    required this.controller,
   }) : super(key: key);
 
   final PanelController controller;
@@ -134,15 +137,15 @@ class _FirstView extends StatelessWidget {
       children: [
         ElevatedButton(
           onPressed: () => controller.open(),
-          child: Text('open panel'),
+          child: const Text('open panel'),
         ),
         ElevatedButton(
           onPressed: () => controller.close(),
-          child: Text('close panel'),
+          child: const Text('close panel'),
         ),
         ElevatedButton(
           onPressed: () => controller.expand(),
-          child: Text('expand panel'),
+          child: const Text('expand panel'),
         ),
       ],
     );
@@ -155,7 +158,7 @@ class _SecondView extends StatelessWidget {
     const double circularBoxHeight = 16.0;
     final Size size = MediaQuery.of(context).size;
     return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
+      builder: (context, constraints) {
         return ConstrainedBox(
           constraints: BoxConstraints(
             minHeight: size.height + kToolbarHeight + 44.0,
@@ -166,7 +169,9 @@ class _SecondView extends StatelessWidget {
               borderRadius: const BorderRadius.only(topLeft: Radius.circular(circularBoxHeight), topRight: Radius.circular(circularBoxHeight)),
               border: Border.all(color: Colors.blue),
             ),
-            child: Center(child: Text("second")),
+            child: const Center(
+              child: Text("second"),
+            ),
           ),
         );
       },

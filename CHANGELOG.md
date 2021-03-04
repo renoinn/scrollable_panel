@@ -1,3 +1,8 @@
+## [0.4.0] - 2021/03/04
+
+* null safety support
+required dart version `>=2.12.0`
+
 ## [0.3.0] - 2021/03/03
 
 * add parameter onOpen, defaultPanelState
