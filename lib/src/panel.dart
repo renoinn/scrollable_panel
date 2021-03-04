@@ -200,16 +200,33 @@ class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProv
 }
 
 class PanelController {
+  PanelController();
+
   _ScrollablePanelState? _state;
 
+  /// ValueListenable panel animation. when panel drag or call open/close/expand, notifier listeners.
   Animation? get animation => _state?._dragAnimationController;
-  double? get value => _state?._dragAnimationController.value;
+
+  /// PanelController need attach _ScrollablePanelState.
   bool get isAttached => _state != null;
+
+  /// return defaultPanelSize
   double get defaultPanelSize => _state?.defaultPanelSize ?? 0.25;
+
+  /// return minPanelSize
   double get minPanelSize => _state?.minPanelSize ?? 0;
+
+  /// return maxPanelSize
   double get maxPanelSize => _state?.maxPanelSize ?? 1.0;
 
-  PanelController();
+  /// return true if panel state is [PanelState.open]
+  bool get isOpen => _state?._panelState == PanelState.open;
+
+  /// return true if panel state is [PanelState.close]
+  bool get isClose => _state?._panelState == PanelState.close;
+
+  /// return true if panel state is [PanelState.expand]
+  bool get isExpand => _state?._panelState == PanelState.expand;
 
   void _addState(_ScrollablePanelState state) {
     _state = state;
@@ -301,7 +318,7 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
   @override
   void applyUserOffset(double delta) {
     if (!listShouldScroll &&
-        (!(controller.value == controller.maxPanelSize || controller.value == controller.minPanelSize) ||
+        (!(controllerValue == controller.maxPanelSize || controllerValue == controller.minPanelSize) ||
             (controllerValue < controller.maxPanelSize && delta < 0) ||
             (controllerValue > controller.minPanelSize && delta > 0))) {
       controller._updateExtent(-delta);
@@ -313,7 +330,7 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
   @override
   void goBallistic(double velocity) {
     if (!listShouldScroll &&
-        (!(controller.value == controller.maxPanelSize || controller.value == controller.minPanelSize) ||
+        (!(controllerValue == controller.maxPanelSize || controllerValue == controller.minPanelSize) ||
             (controllerValue < controller.maxPanelSize && velocity < 0) ||
             (controllerValue > controller.minPanelSize && velocity > 0))) {
       super.goBallistic(0);
