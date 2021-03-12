@@ -1,3 +1,8 @@
+## [0.4.1] - 2021/03/12
+
+* add getter isOpen, isClose, isExpand
+* add test code
+
 ## [0.4.0] - 2021/03/04
 
 * null safety support

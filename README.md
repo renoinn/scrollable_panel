@@ -80,5 +80,5 @@ class _MyHomePageState extends State<MyHomePage> {
 
 - ~write README.md and dartdoc~
 - ~null-safety support~
-- write test code
+- ~write test code~
 - add `List<double> anchor` property to use multi snapping point.

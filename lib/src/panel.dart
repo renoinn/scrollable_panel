@@ -15,8 +15,9 @@ class ScrollablePanel extends StatefulWidget {
     this.onOpen,
     this.onClose,
     this.onExpand,
-  })  : assert(minPanelSize < defaultPanelSize),
-        assert(defaultPanelSize < maxPanelSize),
+  })  : assert(minPanelSize <= defaultPanelSize),
+        assert(defaultPanelSize <= maxPanelSize),
+        assert(minPanelSize < maxPanelSize),
         super(key: key);
 
   /// default PanelState. if null, set [PanelState.open].
@@ -35,7 +36,7 @@ class ScrollablePanel extends StatefulWidget {
   final double maxPanelSize;
 
   /// build inner widget in panel.
-  /// pass [_PanelScrollController] instance to scrollController.
+  /// pass [PanelScrollController] instance to scrollController.
   ///
   /// ```dart
   /// builder: (context, controller) {
@@ -44,7 +45,11 @@ class ScrollablePanel extends StatefulWidget {
   ///     child: InnerView(),
   ///   );
   /// },
+  ///
   /// ```
+  ///
+  /// can't drag panel if builder callback return non [Scrollable] widget.
+  /// if you want drag to expand, need to return [Scrollable] widget.
   final ScrollableWidgetBuilder builder;
 
   /// [PanelController] instance for control panel.
@@ -60,7 +65,7 @@ class ScrollablePanel extends StatefulWidget {
   final VoidCallback? onExpand;
 
   @override
-  State<StatefulWidget> createState() => _ScrollablePanelState();
+  State<StatefulWidget> createState() => ScrollablePanelState();
 }
 
 enum PanelState {
@@ -74,7 +79,7 @@ enum PanelState {
   close,
 }
 
-class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProviderStateMixin {
+class ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProviderStateMixin {
   final double _snapThreshold = 0.2;
   double get defaultPanelSize => widget.defaultPanelSize;
   double get minPanelSize => widget.minPanelSize;
@@ -98,29 +103,34 @@ class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProv
       if (mounted) {
         setState(() {});
 
+        final onOpen = widget.onOpen;
         if (_dragAnimationController.value == defaultPanelSize) {
-          if (widget.onOpen != null && _panelState != PanelState.open) {
-            widget.onOpen!();
+          if (onOpen != null && _panelState != PanelState.open) {
+            onOpen();
           }
           _panelState = PanelState.open;
         }
+
+        final onClose = widget.onClose;
         if (_dragAnimationController.value == minPanelSize) {
-          if (widget.onClose != null && _panelState != PanelState.close) {
-            widget.onClose!();
+          if (onClose != null && _panelState != PanelState.close) {
+            onClose();
           }
           _panelState = PanelState.close;
         }
+
+        final onExpand = widget.onExpand;
         if (_dragAnimationController.value == maxPanelSize) {
-          if (widget.onExpand != null && _panelState != PanelState.expand) {
-            widget.onExpand!();
+          if (onExpand != null && _panelState != PanelState.expand) {
+            onExpand();
           }
           _panelState = PanelState.expand;
         }
       }
     });
     final panelController = widget.controller ?? PanelController();
-    panelController._addState(this);
-    _scrollController = _PanelScrollController(controller: panelController);
+    panelController.addState(this);
+    _scrollController = PanelScrollController(controller: panelController);
   }
 
   @override
@@ -170,29 +180,29 @@ class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProv
     return true;
   }
 
-  void _animateTo(double to) {
-    _dragAnimationController.animateTo(to);
+  Future<void> _animateTo(double to) async {
+    await _dragAnimationController.animateTo(to);
   }
 
-  void _toDefault() {
-    _dragAnimationController.animateTo(defaultPanelSize);
+  Future<void> _toDefault() async {
+    await _animateTo(defaultPanelSize);
   }
 
-  void _expand() {
-    _animateTo(maxPanelSize);
+  Future<void> _expand() async {
+    await _animateTo(maxPanelSize);
   }
 
-  void _close() {
-    _animateTo(minPanelSize);
+  Future<void> _close() async {
+    await _animateTo(minPanelSize);
   }
 
   Future<bool> _onWillPop() async {
     _scrollController.jumpTo(0.0);
     if (_dragAnimationController.value > defaultPanelSize) {
-      _toDefault();
+      await _toDefault();
       return false;
     } else if (_dragAnimationController.value > minPanelSize) {
-      _close();
+      await _close();
       return false;
     }
     return true;
@@ -202,7 +212,7 @@ class _ScrollablePanelState extends State<ScrollablePanel> with SingleTickerProv
 class PanelController {
   PanelController();
 
-  _ScrollablePanelState? _state;
+  ScrollablePanelState? _state;
 
   /// ValueListenable panel animation. when panel drag or call open/close/expand, notifier listeners.
   Animation? get animation => _state?._dragAnimationController;
@@ -228,7 +238,8 @@ class PanelController {
   /// return true if panel state is [PanelState.expand]
   bool get isExpand => _state?._panelState == PanelState.expand;
 
-  void _addState(_ScrollablePanelState state) {
+  @visibleForTesting
+  void addState(ScrollablePanelState state) {
     _state = state;
   }
 
@@ -239,30 +250,32 @@ class PanelController {
   }
 
   /// animate panel height to passed value
-  void animateTo(double to) {
+  Future<void> animateTo(double to) async {
     if (!isAttached) throw UnAttachStateException('you can\'t use controller before _ScrollablePanelState build.');
-    _state?._animateTo(to);
+    await _state?._animateTo(to);
   }
 
   /// animate panel height to defaultPanelSize
-  void toDefault() {
+  Future<void> toDefault() async {
     if (!isAttached) throw UnAttachStateException('you can\'t use controller before _ScrollablePanelState build.');
-    _state?._toDefault();
+    await _state?._toDefault();
   }
 
   /// alias toDefault
-  void open() => toDefault();
+  Future<void> open() async {
+    await toDefault();
+  }
 
   /// animate panel height to maxPanelSize
-  void expand() {
+  Future<void> expand() async {
     if (!isAttached) throw UnAttachStateException('you can\'t use controller before _ScrollablePanelState build.');
-    _state?._expand();
+    await _state?._expand();
   }
 
   /// animate panel height to minPanelSize
-  void close() {
+  Future<void> close() async {
     if (!isAttached) throw UnAttachStateException('you can\'t use controller before _ScrollablePanelState build.');
-    _state?._close();
+    await _state?._close();
   }
 }
 
@@ -272,10 +285,11 @@ class UnAttachStateException implements Exception {
   UnAttachStateException(this.message);
 }
 
-class _PanelScrollController extends ScrollController {
+@visibleForTesting
+class PanelScrollController extends ScrollController {
   final PanelController controller;
 
-  _PanelScrollController({
+  PanelScrollController({
     double initialScrollOffset = 0.0,
     bool keepScrollOffset = true,
     String? debugLabel,
@@ -287,15 +301,14 @@ class _PanelScrollController extends ScrollController {
         );
 
   @override
-  _PanelScrollPosition createScrollPosition(ScrollPhysics physics, ScrollContext context, ScrollPosition? oldPosition) {
-    return _PanelScrollPosition(physics: physics, context: context, oldPosition: oldPosition, controller: controller);
+  PanelScrollPosition createScrollPosition(ScrollPhysics physics, ScrollContext context, ScrollPosition? oldPosition) {
+    return PanelScrollPosition(physics: physics, context: context, oldPosition: oldPosition, controller: controller);
   }
 }
 
-class _PanelScrollPosition extends ScrollPositionWithSingleContext {
-  final PanelController controller;
-
-  _PanelScrollPosition({
+@visibleForTesting
+class PanelScrollPosition extends ScrollPositionWithSingleContext {
+  PanelScrollPosition({
     required ScrollPhysics physics,
     required ScrollContext context,
     double initialPixels = 0.0,
@@ -311,6 +324,8 @@ class _PanelScrollPosition extends ScrollPositionWithSingleContext {
           oldPosition: oldPosition,
           debugLabel: debugLabel,
         );
+
+  final PanelController controller;
 
   bool get listShouldScroll => pixels > 0.0;
   double get controllerValue => controller.animation?.value ?? 0;
